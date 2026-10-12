@@ -25,6 +25,7 @@ const SPEED_LIMITS: Record<SpeedName, number> = {
 
 const STORAGE_KEY = "ptz-camera-settings";
 const VISCA_COMMAND_PAYLOAD_TYPE = 0x0100;
+const VISCA_OVER_IP_HEADER_LENGTH = 8;
 const directionBytes: Record<Direction, [number, number]> = {
   left: [0x01, 0x03],
   right: [0x02, 0x03],
@@ -175,7 +176,7 @@ function sendViscaPayload(label: string, payload: number[]): void {
   }
 
   const packet = buildViscaOverIpPacket(payload);
-  showMessage(`${label}: ${formatBytes(packet)} -> ${camera.ip}:${camera.port}`);
+  showMessage(formatPacketStatus(label, camera, packet));
 
   if (!window.sendViscaUdp) {
     return;
@@ -268,6 +269,13 @@ function readRawSpeedValue(name: SpeedName): number | null {
 
 function formatBytes(bytes: number[]): string {
   return bytes.map(formatByte).join(" ");
+}
+
+function formatPacketStatus(label: string, camera: CameraSettings, packet: number[]): string {
+  const header = packet.slice(0, VISCA_OVER_IP_HEADER_LENGTH);
+  const command = packet.slice(VISCA_OVER_IP_HEADER_LENGTH);
+
+  return `${label}: ${formatBytes(header)}\n${formatBytes(command)} -> ${camera.ip}:${camera.port}`;
 }
 
 function formatByte(value: number): string {

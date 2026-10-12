@@ -24,7 +24,7 @@ button {
 }
 
 .ptz-app {
-  width: min(424px, calc(100vw - 32px));
+  width: min(460px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 28px 0;
 }
@@ -275,6 +275,7 @@ h2 {
   display: block;
   min-height: 28px;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
   color: #d7f5fd;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 14px;
