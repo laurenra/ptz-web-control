@@ -24,9 +24,20 @@ button {
 }
 
 .ptz-app {
-  width: min(460px, calc(100vw - 32px));
+  width: min(1000px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 28px 0;
+}
+
+.workspace-layout {
+  display: grid;
+  grid-template-columns: 460px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.camera-column {
+  min-width: 0;
 }
 
 .app-header {
@@ -78,7 +89,6 @@ h2 {
 }
 
 .camera-settings {
-  max-width: 424px;
   margin-bottom: 28px;
   padding: 16px;
 }
@@ -279,6 +289,100 @@ h2 {
   color: #d7f5fd;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 14px;
+}
+
+.setup-panel {
+  min-width: 0;
+  padding: 16px;
+}
+
+.setup-section {
+  padding: 16px;
+  border: 1px solid #555752;
+  border-radius: 4px;
+}
+
+.setup-section + .setup-section {
+  margin-top: 20px;
+}
+
+.setup-section h3 {
+  margin: 0 0 16px;
+  color: #d7f5fd;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.setup-button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 4px;
+  background: #8fdff6;
+  color: #242524;
+  font-weight: 700;
+}
+
+.setup-button:hover {
+  background: #b0eafa;
+}
+
+.setup-button:focus-visible,
+.server-responses:focus-visible {
+  outline: 3px solid #8fdff6;
+  outline-offset: 4px;
+}
+
+.setup-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+#discovery-status {
+  margin: 12px 0 0;
+  color: #d7f5fd;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.server-responses {
+  min-height: 300px;
+  max-height: 560px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #555752;
+  border-radius: 4px;
+  background: #060606;
+  color: #d7f5fd;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+}
+
+.response-placeholder,
+.server-response {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.response-placeholder {
+  color: #a5a6a3;
+}
+
+.server-response + .server-response {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #555752;
+}
+
+@media (max-width: 860px) {
+  .ptz-app {
+    width: min(460px, calc(100vw - 32px));
+  }
+
+  .workspace-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {

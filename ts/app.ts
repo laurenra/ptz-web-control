@@ -24,6 +24,23 @@ const SPEED_LIMITS: Record<SpeedName, number> = {
 };
 
 const STORAGE_KEY = "ptz-camera-settings";
+const DISCOVERY_URL = "ws://127.0.0.1:8080/ws/discovery";
+const DISCOVERY_PROBE = `<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://w3.org"
+               xmlns:wsa="http://xmlsoap.org"
+               xmlns:wsd="http://xmlsoap.org"
+               xmlns:dn="http://onvif.org">
+   <soap:Header>
+      <wsa:MessageID>uuid:c2b1860d-3294-4c4b-8d48-000000000000</wsa:MessageID>
+      <wsa:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>
+      <wsa:Action>http://xmlsoap.org/Probe</wsa:Action>
+   </soap:Header>
+   <soap:Body>
+      <wsd:Probe>
+         <wsd:Types>dn:NetworkVideoTransmitter</wsd:Types>
+      </wsd:Probe>
+   </soap:Body>
+</soap:Envelope>`;
 const VISCA_COMMAND_PAYLOAD_TYPE = 0x0100;
 const VISCA_OVER_IP_HEADER_LENGTH = 8;
 const directionBytes: Record<Direction, [number, number]> = {
@@ -54,6 +71,7 @@ bindSettingsPersistence();
 bindSpeedValidation();
 bindMotionControls();
 bindPresetControls();
+bindDiscoveryControls();
 showSpeedStatus();
 
 function getInput(id: string): HTMLInputElement {
@@ -151,6 +169,110 @@ function bindPresetControls(): void {
       }
 
       sendViscaPayload(`Recall preset ${preset}`, [0x81, 0x01, 0x04, 0x3f, 0x02, preset, 0xff]);
+    });
+  });
+}
+
+function bindDiscoveryControls(): void {
+  const button = document.getElementById("find-cameras");
+  const status = document.getElementById("discovery-status");
+  const responses = document.getElementById("server-responses");
+
+  if (!(button instanceof HTMLButtonElement) || !status || !responses) {
+    throw new Error("Missing discovery controls.");
+  }
+
+  let discoverySocket: WebSocket | null = null;
+
+  const sendProbe = (socket: WebSocket): void => {
+    try {
+      socket.send(DISCOVERY_PROBE);
+      status.textContent = "Discovery probe sent. Waiting for responses…";
+    } catch (error: unknown) {
+      status.textContent = `Discovery failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  };
+
+  button.addEventListener("click", () => {
+    if (discoverySocket?.readyState === WebSocket.OPEN) {
+      sendProbe(discoverySocket);
+      return;
+    }
+
+    if (discoverySocket?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Connecting to discovery server…";
+
+    let socket: WebSocket;
+    try {
+      // socket = new WebSocket(DISCOVERY_URL);
+      socket = new WebSocket('ws://127.0.0.1:8080/ws/discovery');
+    } catch (error: unknown) {
+      button.disabled = false;
+      status.textContent = `Connection failed: ${error instanceof Error ? error.message : String(error)}`;
+      return;
+    }
+
+    discoverySocket = socket;
+    socket.binaryType = "arraybuffer";
+    let failed = false;
+    const connectionTimeout = window.setTimeout(() => {
+      if (discoverySocket === socket && socket.readyState === WebSocket.CONNECTING) {
+        failed = true;
+        status.textContent = "Connection timed out. Check that the discovery server is running and try again.";
+        button.disabled = false;
+        socket.close();
+      }
+    }, 10000);
+
+    socket.addEventListener("open", () => {
+      window.clearTimeout(connectionTimeout);
+      if (discoverySocket !== socket) {
+        return;
+      }
+      button.disabled = false;
+      sendProbe(socket);
+    });
+
+    socket.addEventListener("message", (event: MessageEvent) => {
+      if (discoverySocket !== socket) {
+        return;
+      }
+      const response = document.createElement("pre");
+      response.className = "server-response";
+      response.textContent = event.data instanceof ArrayBuffer
+        ? new TextDecoder().decode(event.data)
+        : String(event.data);
+      responses.querySelector(".response-placeholder")?.remove();
+      responses.append(response);
+      responses.scrollTop = responses.scrollHeight;
+      status.textContent = "Response received. Listening for more responses…";
+    });
+
+    socket.addEventListener("error", () => {
+      window.clearTimeout(connectionTimeout);
+      if (discoverySocket !== socket) {
+        return;
+      }
+      failed = true;
+      button.disabled = false;
+      status.textContent = "Connection failed. Check the discovery server at 127.0.0.1:8080 and try again.";
+      socket.close();
+    });
+
+    socket.addEventListener("close", () => {
+      window.clearTimeout(connectionTimeout);
+      if (discoverySocket !== socket) {
+        return;
+      }
+      discoverySocket = null;
+      button.disabled = false;
+      if (!failed) {
+        status.textContent = "Discovery connection closed. Select Find Cameras to reconnect.";
+      }
     });
   });
 }

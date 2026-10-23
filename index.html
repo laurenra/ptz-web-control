@@ -23,72 +23,93 @@
       <h1 id="app-title">Camera Control</h1>
     </header>
 
-    <section class="panel camera-settings" aria-labelledby="camera-settings-title">
-      <h2 id="camera-settings-title">Camera Settings</h2>
-      <div class="field-stack">
-        <label class="field" for="camera-name">
-          <span>Name</span>
-          <input id="camera-name" name="cameraName" type="text" autocomplete="off" value="Camera 1">
-        </label>
-        <label class="field" for="camera-ip">
-          <span>Camera IP</span>
-          <input id="camera-ip" name="cameraIp" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.100">
-        </label>
-        <label class="field" for="camera-port">
-          <span>Port</span>
-          <input id="camera-port" name="cameraPort" type="number" inputmode="numeric" min="1" max="65535" value="52381">
-        </label>
+    <div class="workspace-layout">
+      <div class="camera-column">
+        <section class="panel camera-settings" aria-labelledby="camera-settings-title">
+          <h2 id="camera-settings-title">Camera Settings</h2>
+          <div class="field-stack">
+            <label class="field" for="camera-name">
+              <span>Name</span>
+              <input id="camera-name" name="cameraName" type="text" autocomplete="off" value="Camera 1">
+            </label>
+            <label class="field" for="camera-ip">
+              <span>Camera IP</span>
+              <input id="camera-ip" name="cameraIp" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.100">
+            </label>
+            <label class="field" for="camera-port">
+              <span>Port</span>
+              <input id="camera-port" name="cameraPort" type="number" inputmode="numeric" min="1" max="65535" value="52381">
+            </label>
+          </div>
+        </section>
+
+        <section class="panel control-panel" aria-labelledby="control-title">
+          <h2 id="control-title">Control</h2>
+          <div class="control-layout">
+            <div class="motion-pad" aria-label="Pan and tilt controls">
+              <button class="arrow-button up" type="button" data-direction="up" aria-label="Move up"></button>
+              <button class="arrow-button left" type="button" data-direction="left" aria-label="Move left"></button>
+              <button class="arrow-button stop" type="button" data-direction="stop" aria-label="Stop"></button>
+              <button class="arrow-button right" type="button" data-direction="right" aria-label="Move right"></button>
+              <button class="arrow-button down" type="button" data-direction="down" aria-label="Move down"></button>
+            </div>
+
+            <div class="speed-fields" aria-label="Speed controls">
+              <label class="speed-field" for="pan-speed">
+                <span>Pan</span>
+                <input id="pan-speed" name="panSpeed" type="number" min="1" max="25" value="10" inputmode="numeric">
+              </label>
+              <label class="speed-field" for="tilt-speed">
+                <span>Tilt</span>
+                <input id="tilt-speed" name="tiltSpeed" type="number" min="1" max="25" value="10" inputmode="numeric">
+              </label>
+              <label class="speed-field" for="zoom-speed">
+                <span>Zoom</span>
+                <input id="zoom-speed" name="zoomSpeed" type="number" min="1" max="8" value="4" inputmode="numeric">
+              </label>
+              <label class="speed-field" for="focus-speed">
+                <span>Focus</span>
+                <input id="focus-speed" name="focusSpeed" type="number" min="1" max="8" value="4" inputmode="numeric">
+              </label>
+            </div>
+          </div>
+
+          <div class="preset-grid" aria-label="Presets">
+            <button class="preset-button" type="button" data-preset="1">1</button>
+            <button class="preset-button" type="button" data-preset="2">2</button>
+            <button class="preset-button" type="button" data-preset="3">3</button>
+            <button class="preset-button" type="button" data-preset="4">4</button>
+            <button class="preset-button" type="button" data-preset="5">5</button>
+            <button class="preset-button" type="button" data-preset="6">6</button>
+            <button class="preset-button" type="button" data-preset="7">7</button>
+            <button class="preset-button" type="button" data-preset="8">8</button>
+            <button class="preset-button" type="button" data-preset="9">9</button>
+          </div>
+        </section>
+
+        <section class="panel status-panel" aria-labelledby="status-title">
+          <h2 id="status-title">Packet</h2>
+          <output id="packet-output" aria-live="polite">Ready</output>
+        </section>
       </div>
-    </section>
 
-    <section class="panel control-panel" aria-labelledby="control-title">
-      <h2 id="control-title">Control</h2>
-      <div class="control-layout">
-        <div class="motion-pad" aria-label="Pan and tilt controls">
-          <button class="arrow-button up" type="button" data-direction="up" aria-label="Move up"></button>
-          <button class="arrow-button left" type="button" data-direction="left" aria-label="Move left"></button>
-          <button class="arrow-button stop" type="button" data-direction="stop" aria-label="Stop"></button>
-          <button class="arrow-button right" type="button" data-direction="right" aria-label="Move right"></button>
-          <button class="arrow-button down" type="button" data-direction="down" aria-label="Move down"></button>
-        </div>
+      <section class="panel setup-panel" aria-labelledby="setup-title">
+        <h2 id="setup-title">Setup</h2>
 
-        <div class="speed-fields" aria-label="Speed controls">
-          <label class="speed-field" for="pan-speed">
-            <span>Pan</span>
-            <input id="pan-speed" name="panSpeed" type="number" min="1" max="25" value="10" inputmode="numeric">
-          </label>
-          <label class="speed-field" for="tilt-speed">
-            <span>Tilt</span>
-            <input id="tilt-speed" name="tiltSpeed" type="number" min="1" max="25" value="10" inputmode="numeric">
-          </label>
-          <label class="speed-field" for="zoom-speed">
-            <span>Zoom</span>
-            <input id="zoom-speed" name="zoomSpeed" type="number" min="1" max="8" value="4" inputmode="numeric">
-          </label>
-          <label class="speed-field" for="focus-speed">
-            <span>Focus</span>
-            <input id="focus-speed" name="focusSpeed" type="number" min="1" max="8" value="4" inputmode="numeric">
-          </label>
-        </div>
-      </div>
+        <section class="setup-section" aria-labelledby="general-setup-title">
+          <h3 id="general-setup-title">General Setup</h3>
+          <button id="find-cameras" class="setup-button" type="button">Find Cameras</button>
+          <p id="discovery-status" role="status">Ready to find cameras.</p>
+        </section>
 
-      <div class="preset-grid" aria-label="Presets">
-        <button class="preset-button" type="button" data-preset="1">1</button>
-        <button class="preset-button" type="button" data-preset="2">2</button>
-        <button class="preset-button" type="button" data-preset="3">3</button>
-        <button class="preset-button" type="button" data-preset="4">4</button>
-        <button class="preset-button" type="button" data-preset="5">5</button>
-        <button class="preset-button" type="button" data-preset="6">6</button>
-        <button class="preset-button" type="button" data-preset="7">7</button>
-        <button class="preset-button" type="button" data-preset="8">8</button>
-        <button class="preset-button" type="button" data-preset="9">9</button>
-      </div>
-    </section>
-
-    <section class="panel status-panel" aria-labelledby="status-title">
-      <h2 id="status-title">Packet</h2>
-      <output id="packet-output" aria-live="polite">Ready</output>
-    </section>
+        <section class="setup-section response-section" aria-labelledby="server-responses-title">
+          <h3 id="server-responses-title">UDP Server Responses</h3>
+          <div id="server-responses" class="server-responses" role="log" aria-labelledby="server-responses-title" aria-live="polite" tabindex="0">
+            <p class="response-placeholder">Responses will appear here after finding cameras.</p>
+          </div>
+        </section>
+      </section>
+    </div>
   </main>
 
   <script src="js/app.js"></script>

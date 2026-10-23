@@ -11,14 +11,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack serve --open --config webpack.config.dev.js",
-    "build": "webpack --config webpack.config.prod.js"
+    "build:ts": "tsc --project tsconfig.json",
+    "watch:ts": "tsc --project tsconfig.json --watch",
+    "build": "npm run build:ts && webpack --config webpack.config.prod.js"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^11.0.0",
+    "copy-webpack-plugin": "^14.0.0",
     "html-webpack-plugin": "^5.6.0",
+    "typescript": "^7.0.2",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4",
+    "webpack-dev-server": "^6.1.0",
     "webpack-merge": "^5.10.0"
   }
 }
