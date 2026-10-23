@@ -24,6 +24,8 @@ const SPEED_LIMITS: Record<SpeedName, number> = {
 };
 
 const STORAGE_KEY = "ptz-camera-settings";
+const TEST_URL = "ws://127.0.0.1:8080/ws/test";
+const VISCA_URL = "ws://127.0.0.1:8080/ws";
 const DISCOVERY_URL = "ws://127.0.0.1:8080/ws/discovery";
 const DISCOVERY_PROBE = `<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://w3.org"
@@ -174,56 +176,96 @@ function bindPresetControls(): void {
 }
 
 function bindDiscoveryControls(): void {
-  const button = document.getElementById("find-cameras");
+  const openButton = document.getElementById("open-discovery-socket");
+  const findButton = document.getElementById("find-cameras");
+  const testButton = document.getElementById("test-socket");
   const status = document.getElementById("discovery-status");
   const responses = document.getElementById("server-responses");
 
-  if (!(button instanceof HTMLButtonElement) || !status || !responses) {
+  if (!(openButton instanceof HTMLButtonElement) || !(findButton instanceof HTMLButtonElement) || !(testButton instanceof HTMLButtonElement) || !status || !responses) {
     throw new Error("Missing discovery controls.");
   }
 
   let discoverySocket: WebSocket | null = null;
+  findButton.disabled = true;
+  testButton.disabled = true;
 
-  const sendProbe = (socket: WebSocket): void => {
+  testButton.addEventListener("click", () => {
+    const socket = discoverySocket;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      testButton.disabled = true;
+      status.textContent = "Socket is not open. Select Open Socket to connect.";
+      return;
+    }
+
+    try {
+      socket.send("Test message");
+      status.textContent = "Test message sent. Waiting for responses…";
+    } catch (error: unknown) {
+      status.textContent = `Socket test failed: ${error instanceof Error ? error.message : String(error)}`;
+      if (socket.readyState !== WebSocket.OPEN) {
+        testButton.disabled = true;
+        findButton.disabled = true;
+        openButton.disabled = false;
+      }
+    }
+  });
+
+  findButton.addEventListener("click", () => {
+    const socket = discoverySocket;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      findButton.disabled = true;
+      testButton.disabled = true;
+      status.textContent = "Socket is not open. Select Open Socket to connect.";
+      return;
+    }
+    socket.binaryType = "arraybuffer";
+    console.log("Connected to socket. Set binaryType to arraybuffer.");
+
     try {
       socket.send(DISCOVERY_PROBE);
       status.textContent = "Discovery probe sent. Waiting for responses…";
     } catch (error: unknown) {
       status.textContent = `Discovery failed: ${error instanceof Error ? error.message : String(error)}`;
+      if (socket.readyState !== WebSocket.OPEN) {
+        findButton.disabled = true;
+        testButton.disabled = true;
+        openButton.disabled = false;
+      }
     }
-  };
+  });
 
-  button.addEventListener("click", () => {
-    if (discoverySocket?.readyState === WebSocket.OPEN) {
-      sendProbe(discoverySocket);
+  openButton.addEventListener("click", () => {
+    if (discoverySocket?.readyState === WebSocket.OPEN || discoverySocket?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
-    if (discoverySocket?.readyState === WebSocket.CONNECTING) {
-      return;
-    }
-
-    button.disabled = true;
+    openButton.disabled = true;
+    findButton.disabled = true;
+    testButton.disabled = true;
     status.textContent = "Connecting to discovery server…";
 
     let socket: WebSocket;
     try {
       // socket = new WebSocket(DISCOVERY_URL);
-      socket = new WebSocket('ws://127.0.0.1:8080/ws/discovery');
+      // socket = new WebSocket(VISCA_URL);
+      socket = new WebSocket(TEST_URL);
     } catch (error: unknown) {
-      button.disabled = false;
+      openButton.disabled = false;
       status.textContent = `Connection failed: ${error instanceof Error ? error.message : String(error)}`;
       return;
     }
 
-    discoverySocket = socket;
     socket.binaryType = "arraybuffer";
-    let failed = false;
+    discoverySocket = socket;
+    let failureMessage: string | null = null;
     const connectionTimeout = window.setTimeout(() => {
       if (discoverySocket === socket && socket.readyState === WebSocket.CONNECTING) {
-        failed = true;
-        status.textContent = "Connection timed out. Check that the discovery server is running and try again.";
-        button.disabled = false;
+        failureMessage = "Connection timed out.";
+        status.textContent = `${failureMessage} Select Open Socket to try again.`;
+        openButton.disabled = false;
+        findButton.disabled = true;
+        testButton.disabled = true;
         socket.close();
       }
     }, 10000);
@@ -233,8 +275,10 @@ function bindDiscoveryControls(): void {
       if (discoverySocket !== socket) {
         return;
       }
-      button.disabled = false;
-      sendProbe(socket);
+      openButton.disabled = true;
+      findButton.disabled = false;
+      testButton.disabled = false;
+      status.textContent = "Socket open. Select Find Cameras to send a discovery probe or Test Socket to send a test message.";
     });
 
     socket.addEventListener("message", (event: MessageEvent) => {
@@ -257,22 +301,26 @@ function bindDiscoveryControls(): void {
       if (discoverySocket !== socket) {
         return;
       }
-      failed = true;
-      button.disabled = false;
-      status.textContent = "Connection failed. Check the discovery server at 127.0.0.1:8080 and try again.";
+      failureMessage ??= "WebSocket connection failed. Check the browser console for handshake details.";
+      openButton.disabled = false;
+      findButton.disabled = true;
+      testButton.disabled = true;
+      status.textContent = failureMessage;
       socket.close();
+      console.error("WebSocket connection failed.");
     });
 
-    socket.addEventListener("close", () => {
+    socket.addEventListener("close", (event: CloseEvent) => {
       window.clearTimeout(connectionTimeout);
       if (discoverySocket !== socket) {
         return;
       }
       discoverySocket = null;
-      button.disabled = false;
-      if (!failed) {
-        status.textContent = "Discovery connection closed. Select Find Cameras to reconnect.";
-      }
+      openButton.disabled = false;
+      findButton.disabled = true;
+      testButton.disabled = true;
+      const closeDetails = `code ${event.code}${event.reason ? `: ${event.reason}` : ""}`;
+      status.textContent = `${failureMessage ?? "Socket closed."} (${closeDetails}) Select Open Socket to reconnect.`;
     });
   });
 }

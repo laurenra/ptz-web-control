@@ -98,8 +98,12 @@
 
         <section class="setup-section" aria-labelledby="general-setup-title">
           <h3 id="general-setup-title">General Setup</h3>
-          <button id="find-cameras" class="setup-button" type="button">Find Cameras</button>
-          <p id="discovery-status" role="status">Ready to find cameras.</p>
+          <div class="setup-actions">
+            <button id="open-discovery-socket" class="setup-button" type="button">Open Socket</button>
+            <button id="find-cameras" class="setup-button" type="button" disabled>Find Cameras</button>
+            <button id="test-socket" class="setup-button" type="button" disabled>Test Socket</button>
+          </div>
+          <p id="discovery-status" role="status">Socket closed. Select Open Socket to connect.</p>
         </section>
 
         <section class="setup-section response-section" aria-labelledby="server-responses-title">
