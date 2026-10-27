@@ -11,5 +11,5 @@
     "strict": true,
     "noEmitOnError": true
   },
-  "files": ["ts/app.ts"]
+  "files": ["ts/app.ts", "ts/websocket.ts"],
 }
