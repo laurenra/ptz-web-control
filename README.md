@@ -48,6 +48,24 @@ devServer: {
   static: ['./'],
 }
 ```
+
+## Run (Exact Instructions)
+
+Run the Go server from /ptz-udp-server directory.
+
+```aiignore
+go run . --origin http://localhost:8081
+```
+This tells the Go running on port 8080 to send data to the Node server running on port 8081.
+
+Run a node server from /ptz-web-control directory (on port 8081). Node will try to find the
+next available port. Because 8080 will already be in use, it will use 8081 instead. You can
+alse specify a port with the PORT environment variable (see above).
+
+```aiignore
+npm start
+```
+
 ### To Do:
 - [ ] There may be a problem with hex commands. The packet display shows 09
 instead of 0A.
