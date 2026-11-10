@@ -5,8 +5,10 @@ Web interface for PTZ camera control.
 Run `npm start` to serve the app locally, or serve the production `dist/` folder
 after running `npm run build`. JavaScript modules require an HTTP server.
 
-With a WebSocket server running at `ws://127.0.0.1:8080/ws/test`, select **Open
-Socket**, then **Test Socket** to send `Greetings, Earthlings.`. Connection status
+In **General Setup**, enter the WebSocket server IP or hostname and port (defaults:
+`127.0.0.1` and `8080`). These settings are saved in your browser. With the server
+running, select **Open Socket**, then **Test Socket** to send `Greetings, Earthlings.`
+to its `/ws/test` endpoint. Connection status
 and server responses appear in the Setup panel. Find Cameras remains disabled
 until camera discovery is implemented. The browser uses its native `WebSocket`
 API; the Node `ws` package is only suitable for server-side code.

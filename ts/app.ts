@@ -164,6 +164,8 @@ function sendPanTiltCommand(direction: Direction): void {
   const panSpeed = readSpeedValue("pan");
   const tiltSpeed = readSpeedValue("tilt");
 
+  console.log(`Pan speed: ${panSpeed}, tilt speed: ${tiltSpeed},direction: ${direction}`);
+
   if (panSpeed === null || tiltSpeed === null) {
     return;
   }

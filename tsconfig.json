@@ -9,7 +9,8 @@
     "rootDir": "ts",
     "outDir": "js",
     "strict": true,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "sourceMap": true
   },
   "files": ["ts/app.ts", "ts/websocket.ts"],
 }

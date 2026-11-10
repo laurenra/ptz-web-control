@@ -116,6 +116,7 @@ function bindPresetControls() {
 function sendPanTiltCommand(direction) {
     const panSpeed = readSpeedValue("pan");
     const tiltSpeed = readSpeedValue("tilt");
+    console.log(`Pan speed: ${panSpeed}, tilt speed: ${tiltSpeed},direction: ${direction}`);
     if (panSpeed === null || tiltSpeed === null) {
         return;
     }
@@ -243,3 +244,4 @@ function loadSettings() {
         localStorage.removeItem(STORAGE_KEY);
     }
 }
+//# sourceMappingURL=app.js.map

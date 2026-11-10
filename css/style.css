@@ -313,6 +313,10 @@ h2 {
   font-weight: 400;
 }
 
+.websocket-settings {
+  margin-bottom: 16px;
+}
+
 .setup-actions {
   display: flex;
   flex-wrap: wrap;

@@ -98,6 +98,16 @@
 
         <section class="setup-section" aria-labelledby="general-setup-title">
           <h3 id="general-setup-title">General Setup</h3>
+          <div class="field-stack websocket-settings">
+            <label class="field" for="websocket-host">
+              <span>WebSocket server IP or hostname</span>
+              <input id="websocket-host" name="websocketHost" type="text" autocomplete="off" spellcheck="false" value="127.0.0.1" required>
+            </label>
+            <label class="field" for="websocket-port">
+              <span>WebSocket server port</span>
+              <input id="websocket-port" name="websocketPort" type="number" inputmode="numeric" min="1" max="65535" value="8080" required>
+            </label>
+          </div>
           <div class="setup-actions">
             <button id="open-discovery-socket" class="setup-button" type="button">Open Socket</button>
             <button id="find-cameras" class="setup-button" type="button" disabled>Find Cameras</button>
