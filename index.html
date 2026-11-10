@@ -23,26 +23,22 @@
       <h1 id="app-title">Camera Control</h1>
     </header>
 
-    <div class="workspace-layout">
-      <div class="camera-column">
-        <section class="panel camera-settings" aria-labelledby="camera-settings-title">
-          <h2 id="camera-settings-title">Camera Settings</h2>
-          <div class="field-stack">
-            <label class="field" for="camera-name">
-              <span>Name</span>
-              <input id="camera-name" name="cameraName" type="text" autocomplete="off" value="Camera 1">
-            </label>
-            <label class="field" for="camera-ip">
-              <span>Camera IP</span>
-              <input id="camera-ip" name="cameraIp" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.100">
-            </label>
-            <label class="field" for="camera-port">
-              <span>Port</span>
-              <input id="camera-port" name="cameraPort" type="number" inputmode="numeric" min="1" max="65535" value="52381">
-            </label>
-          </div>
-        </section>
+    <div class="app-tabs" role="tablist" aria-label="Camera controller">
+      <button id="camera-control-tab" class="app-tab" type="button" role="tab" aria-controls="camera-control-panel" aria-selected="true">Camera Control</button>
+      <button id="camera-settings-tab" class="app-tab" type="button" role="tab" aria-controls="camera-settings-panel" aria-selected="false" tabindex="-1">Camera Settings</button>
+      <button id="cameras-setup-tab" class="app-tab" type="button" role="tab" aria-controls="cameras-setup-panel" aria-selected="false" tabindex="-1">Cameras Setup</button>
+      <button id="general-setup-tab" class="app-tab" type="button" role="tab" aria-controls="general-setup-panel" aria-selected="false" tabindex="-1">General Setup</button>
+    </div>
 
+    <section id="camera-control-panel" class="tab-panel" role="tabpanel" aria-labelledby="camera-control-tab" tabindex="0">
+      <div class="panel camera-selection">
+        <label class="field" for="active-camera">
+          <span>Camera</span>
+          <select id="active-camera" name="activeCamera"></select>
+        </label>
+        <p id="active-camera-address" class="section-description"></p>
+      </div>
+      <div class="control-workspace">
         <section class="panel control-panel" aria-labelledby="control-title">
           <h2 id="control-title">Control</h2>
           <div class="control-layout">
@@ -92,12 +88,25 @@
           <output id="packet-output" aria-live="polite">Ready</output>
         </section>
       </div>
+    </section>
 
+    <section id="camera-settings-panel" class="tab-panel panel camera-settings-placeholder" role="tabpanel" aria-labelledby="camera-settings-tab" tabindex="0" hidden></section>
+
+    <section id="cameras-setup-panel" class="tab-panel" role="tabpanel" aria-labelledby="cameras-setup-tab" tabindex="0" hidden>
+      <div class="panel cameras-setup-panel">
+        <h2>Cameras Setup</h2>
+        <p class="section-description">Set up to eight cameras. Changes are saved automatically in this browser.</p>
+        <div id="camera-list" class="camera-grid"></div>
+        <p id="camera-setup-status" class="section-description" role="status"></p>
+      </div>
+    </section>
+
+    <section id="general-setup-panel" class="tab-panel" role="tabpanel" aria-labelledby="general-setup-tab" tabindex="0" hidden>
       <section class="panel setup-panel" aria-labelledby="setup-title">
-        <h2 id="setup-title">Setup</h2>
+        <h2 id="setup-title">General Setup</h2>
 
         <section class="setup-section" aria-labelledby="general-setup-title">
-          <h3 id="general-setup-title">General Setup</h3>
+          <h3 id="general-setup-title">WebSocket connection</h3>
           <div class="field-stack websocket-settings">
             <label class="field" for="websocket-host">
               <span>WebSocket server IP or hostname</span>
@@ -123,7 +132,27 @@
           </div>
         </section>
       </section>
-    </div>
+    </section>
+
+    <template id="camera-template">
+      <fieldset class="camera-card">
+        <legend></legend>
+        <div class="field-stack">
+          <label class="field">
+            <span>Custom name</span>
+            <input data-camera-field="name" type="text" autocomplete="off">
+          </label>
+          <label class="field">
+            <span>Camera IP address</span>
+            <input data-camera-field="ip" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="192.168.1.100">
+          </label>
+          <label class="field">
+            <span>Camera port</span>
+            <input data-camera-field="port" type="number" inputmode="numeric" min="1" max="65535" value="52381" required>
+          </label>
+        </div>
+      </fieldset>
+    </template>
   </main>
 
   <script type="module" src="js/app.js"></script>

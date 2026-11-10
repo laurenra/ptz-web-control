@@ -1,13 +1,9 @@
 import { bindWebSocketControls } from "./websocket.js";
+import { bindCameraSetup, type CameraSettings } from "./cameras.js";
+import { bindTabs } from "./tabs.js";
 
 type Direction = "up" | "down" | "left" | "right" | "stop";
 type SpeedName = "pan" | "tilt" | "zoom" | "focus";
-
-interface CameraSettings {
-  name: string;
-  ip: string;
-  port: number;
-}
 
 interface SpeedControl {
   input: HTMLInputElement;
@@ -40,10 +36,8 @@ const directionBytes: Record<Direction, [number, number]> = {
 
 let sequenceNumber = 0;
 
-const cameraNameInput = getInput("camera-name");
-const cameraIpInput = getInput("camera-ip");
-const cameraPortInput = getInput("camera-port");
 const packetOutput = getOutput("packet-output");
+const readCameraSettings = bindCameraSetup();
 
 const speedControls: Record<SpeedName, SpeedControl> = {
   pan: { input: getInput("pan-speed"), limit: SPEED_LIMITS.pan },
@@ -53,6 +47,7 @@ const speedControls: Record<SpeedName, SpeedControl> = {
 };
 
 loadSettings();
+bindTabs();
 applySpeedLimits();
 bindSettingsPersistence();
 bindSpeedValidation();
@@ -89,7 +84,7 @@ function applySpeedLimits(): void {
 }
 
 function bindSettingsPersistence(): void {
-  [cameraNameInput, cameraIpInput, cameraPortInput, ...Object.values(speedControls).map(({ input }) => input)]
+  Object.values(speedControls).map(({ input }) => input)
     .forEach((input) => input.addEventListener("change", saveSettings));
 }
 
@@ -211,26 +206,6 @@ function buildViscaOverIpPacket(payload: number[]): number[] {
   ];
 }
 
-function readCameraSettings(): CameraSettings | null {
-  const name = cameraNameInput.value.trim() || "Camera";
-  const ip = cameraIpInput.value.trim();
-  const port = Number(cameraPortInput.value);
-
-  if (!ip) {
-    showMessage("Enter a camera IP address.");
-    cameraIpInput.focus();
-    return null;
-  }
-
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    showMessage("Enter a valid port from 1 to 65535.");
-    cameraPortInput.focus();
-    return null;
-  }
-
-  return { name, ip, port };
-}
-
 function readSpeedValue(name: SpeedName): number | null {
   if (!validateSpeed(name, true)) {
     speedControls[name].input.focus();
@@ -295,9 +270,6 @@ function showMessage(message: string): void {
 
 function saveSettings(): void {
   const data = {
-    name: cameraNameInput.value,
-    ip: cameraIpInput.value,
-    port: cameraPortInput.value,
     speeds: Object.fromEntries(
       Object.entries(speedControls).map(([name, { input }]) => [name, input.value]),
     ),
@@ -315,15 +287,8 @@ function loadSettings(): void {
 
   try {
     const data = JSON.parse(raw) as {
-      name?: string;
-      ip?: string;
-      port?: string;
       speeds?: Partial<Record<SpeedName, string>>;
     };
-
-    cameraNameInput.value = data.name ?? cameraNameInput.value;
-    cameraIpInput.value = data.ip ?? cameraIpInput.value;
-    cameraPortInput.value = data.port ?? cameraPortInput.value;
 
     Object.entries(data.speeds ?? {}).forEach(([name, value]) => {
       if (name in speedControls && value !== undefined) {

@@ -5,11 +5,22 @@ Web interface for PTZ camera control.
 Run `npm start` to serve the app locally, or serve the production `dist/` folder
 after running `npm run build`. JavaScript modules require an HTTP server.
 
+The four tabs separate the controls:
+
+- **Camera Control** — Select a camera, use the motion and preset controls, adjust
+  speeds, and view the generated packet.
+- **Camera Settings** — Blank for now, reserved for exposure, white balance, OSD,
+  pan/tilt speed lock, image modes, and color adjustments.
+- **Cameras Setup** — Give each of eight cameras a custom name, IP address, and
+  port. Entries and the selected camera are saved in this browser. Existing
+  single-camera settings are carried over to Camera 1.
+- **General Setup** — Configure the WebSocket connection and view server replies.
+
 In **General Setup**, enter the WebSocket server IP or hostname and port (defaults:
 `127.0.0.1` and `8080`). These settings are saved in your browser. With the server
 running, select **Open Socket**, then **Test Socket** to send `Greetings, Earthlings.`
 to its `/ws/test` endpoint. Connection status
-and server responses appear in the Setup panel. Find Cameras remains disabled
+and server responses appear in the General Setup tab. Find Cameras remains disabled
 until camera discovery is implemented. The browser uses its native `WebSocket`
 API; the Node `ws` package is only suitable for server-side code.
 
