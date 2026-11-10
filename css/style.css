@@ -28,6 +28,12 @@ button {
   cursor: pointer;
 }
 
+.arrow-button:disabled,
+.preset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .ptz-app {
   width: min(1000px, calc(100vw - 32px));
   margin: 0 auto;

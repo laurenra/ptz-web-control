@@ -9,7 +9,7 @@
   "license": "",
   "author": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build:ts && node --test tests/*.test.mjs",
     "start": "webpack serve --open --config webpack.config.dev.js",
     "build:ts": "tsc --project tsconfig.json",
     "watch:ts": "tsc --project tsconfig.json --watch",

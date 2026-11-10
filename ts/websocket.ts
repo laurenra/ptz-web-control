@@ -1,16 +1,21 @@
+import type { CameraSettings } from "./cameras.js";
+import { bindCameraConnection } from "./listeners.js";
+
 const STORAGE_KEY = "ptz-websocket-settings";
 const TEST_MESSAGE = "Greetings, Earthlings.";
 
-export function bindWebSocketControls(): void {
+export function bindWebSocketControls(readCamera: (report?: boolean) => CameraSettings | null): (camera: CameraSettings, packet: number[]) => void {
   const hostInput = document.getElementById("websocket-host");
   const portInput = document.getElementById("websocket-port");
   const openButton = document.getElementById("open-discovery-socket");
   const findButton = document.getElementById("find-cameras");
   const testButton = document.getElementById("test-socket");
+  const listenersButton = document.getElementById("show-listeners");
+  const cameraStatus = document.getElementById("camera-connection-status");
   const status = document.getElementById("discovery-status");
   const responses = document.getElementById("server-responses");
 
-  if (!(hostInput instanceof HTMLInputElement) || !(portInput instanceof HTMLInputElement) || !(openButton instanceof HTMLButtonElement) || !(findButton instanceof HTMLButtonElement) || !(testButton instanceof HTMLButtonElement) || !status || !responses) {
+  if (!(hostInput instanceof HTMLInputElement) || !(portInput instanceof HTMLInputElement) || !(openButton instanceof HTMLButtonElement) || !(findButton instanceof HTMLButtonElement) || !(testButton instanceof HTMLButtonElement) || !(listenersButton instanceof HTMLButtonElement) || !cameraStatus || !status || !responses) {
     throw new Error("Missing WebSocket controls.");
   }
 
@@ -36,6 +41,82 @@ export function bindWebSocketControls(): void {
   });
 
   let activeSocket: WebSocket | null = null;
+  const appendResponse = (message: string): void => {
+    const response = document.createElement("pre");
+    response.className = "server-response";
+    response.textContent = message;
+    responses.querySelector(".response-placeholder")?.remove();
+    responses.append(response);
+    responses.scrollTop = responses.scrollHeight;
+  };
+
+  const getServerUrl = (report = false): URL | null => {
+    if (!portInput.checkValidity()) {
+      if (report) portInput.reportValidity();
+      return null;
+    }
+    const host = hostInput.value.trim();
+    try {
+      const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+      const url = new URL(`${protocol}//${host}:${portInput.valueAsNumber}`);
+      if (!host || /[\s/\\@?#]/.test(host) || url.username || url.password || url.port === "0") {
+        throw new Error("Invalid server address");
+      }
+      hostInput.setCustomValidity("");
+      return url;
+    } catch {
+      hostInput.setCustomValidity("Enter a server IP address or hostname, such as 127.0.0.1 or localhost.");
+      if (report) hostInput.reportValidity();
+      return null;
+    }
+  };
+
+  const cameraConnection = bindCameraConnection(
+    () => getServerUrl(),
+    (message) => { cameraStatus.textContent = message; },
+    appendResponse,
+    (ready) => {
+      document.querySelectorAll<HTMLButtonElement>(".arrow-button, .preset-button").forEach((button) => {
+        button.disabled = !ready;
+      });
+    },
+  );
+  const connectSelectedCamera = (): void => cameraConnection.connect(readCamera(false));
+  document.getElementById("active-camera")?.addEventListener("change", () => cameraConnection.connect(readCamera(false), true));
+  document.getElementById("camera-list")?.addEventListener("change", connectSelectedCamera);
+  [hostInput, portInput].forEach((input) => input.addEventListener("change", () => {
+    const previousSocket = activeSocket;
+    activeSocket = null;
+    previousSocket?.close();
+    openButton.disabled = false;
+    testButton.disabled = true;
+    status.textContent = "Server settings changed. Select Open Socket to connect.";
+    connectSelectedCamera();
+  }));
+
+  listenersButton.addEventListener("click", async () => {
+    const server = getServerUrl(true);
+    if (!server) return;
+    saveSettings();
+    listenersButton.disabled = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    try {
+      const response = await fetch(new URL("/api/listeners", server), { method: "GET", cache: "no-store", signal: controller.signal });
+      if (response.status !== 200) {
+        throw new Error(`HTTP ${response.status}: ${(await response.text()).trim()}`);
+      }
+      const routes: unknown = await response.json();
+      if (!Array.isArray(routes)) throw new Error("Expected a JSON array of listener routes.");
+      appendResponse(JSON.stringify(routes, null, 2));
+    } catch (error: unknown) {
+      appendResponse(`Show Listeners failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      window.clearTimeout(timeout);
+      listenersButton.disabled = false;
+    }
+  });
+
   // Camera discovery needs its own endpoint and protocol; this socket is for testing.
   findButton.disabled = true;
   testButton.disabled = true;
@@ -57,32 +138,19 @@ export function bindWebSocketControls(): void {
   });
 
   openButton.addEventListener("click", () => {
+    if (!getServerUrl(true)) return;
+    connectSelectedCamera();
     if (activeSocket?.readyState === WebSocket.OPEN || activeSocket?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
-    if (!portInput.reportValidity()) return;
-
-    const host = hostInput.value.trim();
-    let socketUrl: string;
-    try {
-      const url = new URL(`ws://${host}:${portInput.valueAsNumber}/ws/test`);
-      if (!host || /[\s/\\@?#]/.test(host) || url.username || url.password) {
-        throw new Error("Invalid server address");
-      }
-      socketUrl = url.href;
-    } catch {
-      hostInput.setCustomValidity("Enter a server IP address or hostname, such as 127.0.0.1 or localhost.");
-      hostInput.reportValidity();
-      return;
-    }
-    hostInput.setCustomValidity("");
+    const url = new URL("/ws/test", getServerUrl()!);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    const socketUrl = url.href;
     saveSettings();
 
     openButton.disabled = true;
     testButton.disabled = true;
-    hostInput.disabled = true;
-    portInput.disabled = true;
     status.textContent = `Connecting to ${socketUrl}…`;
 
     let socket: WebSocket;
@@ -121,6 +189,7 @@ export function bindWebSocketControls(): void {
       }
 
       testButton.disabled = false;
+      openButton.disabled = false;
       status.textContent = "Socket open. Select Test Socket to send a message.";
     });
 
@@ -129,14 +198,9 @@ export function bindWebSocketControls(): void {
         return;
       }
 
-      const response = document.createElement("pre");
-      response.className = "server-response";
-      response.textContent = event.data instanceof ArrayBuffer
+      appendResponse(event.data instanceof ArrayBuffer
         ? new TextDecoder().decode(event.data)
-        : String(event.data);
-      responses.querySelector(".response-placeholder")?.remove();
-      responses.append(response);
-      responses.scrollTop = responses.scrollHeight;
+        : String(event.data));
       status.textContent = "Socket open. Response received. Listening for more responses…";
     });
 
@@ -167,4 +231,6 @@ export function bindWebSocketControls(): void {
       status.textContent = `${failureMessage ?? "Socket closed."} (${closeDetails}) Select Open Socket to reconnect.`;
     });
   });
+  connectSelectedCamera();
+  return cameraConnection.send;
 }

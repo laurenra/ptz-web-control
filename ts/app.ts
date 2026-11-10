@@ -10,12 +10,6 @@ interface SpeedControl {
   limit: number;
 }
 
-declare global {
-  interface Window {
-    sendViscaUdp?: (camera: CameraSettings, packet: number[]) => void | Promise<void>;
-  }
-}
-
 const SPEED_LIMITS: Record<SpeedName, number> = {
   pan: 25,
   tilt: 25,
@@ -38,6 +32,7 @@ let sequenceNumber = 0;
 
 const packetOutput = getOutput("packet-output");
 const readCameraSettings = bindCameraSetup();
+const sendViscaUdp = bindWebSocketControls(readCameraSettings);
 
 const speedControls: Record<SpeedName, SpeedControl> = {
   pan: { input: getInput("pan-speed"), limit: SPEED_LIMITS.pan },
@@ -53,7 +48,6 @@ bindSettingsPersistence();
 bindSpeedValidation();
 bindMotionControls();
 bindPresetControls();
-bindWebSocketControls();
 showSpeedStatus();
 
 function getInput(id: string): HTMLInputElement {
@@ -180,13 +174,11 @@ function sendViscaPayload(label: string, payload: number[]): void {
   const packet = buildViscaOverIpPacket(payload);
   showMessage(formatPacketStatus(label, camera, packet));
 
-  if (!window.sendViscaUdp) {
-    return;
-  }
-
-  Promise.resolve(window.sendViscaUdp(camera, packet)).catch((error: unknown) => {
+  try {
+    sendViscaUdp(camera, packet);
+  } catch (error: unknown) {
     showMessage(`Send failed: ${error instanceof Error ? error.message : String(error)}`);
-  });
+  }
 }
 
 function buildViscaOverIpPacket(payload: number[]): number[] {

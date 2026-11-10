@@ -20,6 +20,7 @@ const directionBytes = {
 let sequenceNumber = 0;
 const packetOutput = getOutput("packet-output");
 const readCameraSettings = bindCameraSetup();
+const sendViscaUdp = bindWebSocketControls(readCameraSettings);
 const speedControls = {
     pan: { input: getInput("pan-speed"), limit: SPEED_LIMITS.pan },
     tilt: { input: getInput("tilt-speed"), limit: SPEED_LIMITS.tilt },
@@ -33,7 +34,6 @@ bindSettingsPersistence();
 bindSpeedValidation();
 bindMotionControls();
 bindPresetControls();
-bindWebSocketControls();
 showSpeedStatus();
 function getInput(id) {
     const element = document.getElementById(id);
@@ -132,12 +132,12 @@ function sendViscaPayload(label, payload) {
     }
     const packet = buildViscaOverIpPacket(payload);
     showMessage(formatPacketStatus(label, camera, packet));
-    if (!window.sendViscaUdp) {
-        return;
+    try {
+        sendViscaUdp(camera, packet);
     }
-    Promise.resolve(window.sendViscaUdp(camera, packet)).catch((error) => {
+    catch (error) {
         showMessage(`Send failed: ${error instanceof Error ? error.message : String(error)}`);
-    });
+    }
 }
 function buildViscaOverIpPacket(payload) {
     const sequence = sequenceNumber;

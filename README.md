@@ -19,10 +19,26 @@ The four tabs separate the controls:
 In **General Setup**, enter the WebSocket server IP or hostname and port (defaults:
 `127.0.0.1` and `8080`). These settings are saved in your browser. With the server
 running, select **Open Socket**, then **Test Socket** to send `Greetings, Earthlings.`
-to its `/ws/test` endpoint. Connection status
-and server responses appear in the General Setup tab. Find Cameras remains disabled
+to its `/ws/test` endpoint. **Show Listeners** calls `GET /api/listeners` and displays
+the returned JSON array (including `[]`) in **UDP Server Responses**, without needing
+to open the test socket. Connection status and server responses appear in the General Setup tab. Find Cameras remains disabled
 until camera discovery is implemented. The browser uses its native `WebSocket`
 API; the Node `ws` package is only suitable for server-side code.
+
+Selecting a configured camera automatically posts its IP address and numeric port
+to `http://<server>:<port>/api/listeners` as JSON, for example
+`{"ip":"192.168.1.100","port":52381}`. Both HTTP 201 (created) and HTTP 200
+(already exists) open the camera's WebSocket route, such as
+`ws://<server>:<port>/ws/192-168-1-100`. The arrow and preset buttons send binary
+VISCA over IP packets through that socket; camera replies appear as hex bytes in
+**UDP Server Responses**. Controls are enabled once the camera socket opens.
+Camera connection status appears below the camera selector. **Open Socket** also
+retries a failed camera connection.
+
+Changing the selected camera or its saved IP/port closes the previous camera
+socket and starts the selected listener. Changing the WebSocket server settings
+also reconnects the selected camera. Existing server listeners are kept available.
+An HTTPS page uses HTTPS/WSS for the server connection.
 
 ## Build
 Install dependencies once with `npm install`, then use one of these commands:
@@ -69,7 +85,14 @@ Run the Go server from /ptz-udp-server directory.
 ```aiignore
 go run . --origin http://localhost:8081
 ```
-This tells the Go running on port 8080 to send data to the Node server running on port 8081.
+For camera listeners, allow your cameras' network with `--camera-cidrs`, for example:
+
+```bash
+go run . --origin http://localhost:8081 --camera-cidrs 192.168.1.0/24
+```
+
+This allows the web app at `http://localhost:8081` to call the Go server on port
+8080 and create listeners for cameras on `192.168.1.0/24`.
 
 Run a node server from /ptz-web-control directory (on port 8081). Node will try to find the
 next available port. Because 8080 will already be in use, it will use 8081 instead. You can
